@@ -1,13 +1,11 @@
-const fetch = require('node-fetch'); // گەڕایەوە بۆ require
-const formidable = require('formidable');
+const fetch = require('node-fetch');
+const formidable = require('formidable'); // وەک خۆی دەمێنێتەوە
 const fs = require('fs');
 const FormData = require('form-data');
 
-// تۆکن و ئایدی لە Environment Variables وەردەگیرێن
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const CHAT_ID = process.env.CHAT_ID;
 
-// Vercel پێویستی بەم ڕێکخستنەیە بۆ خوێندنەوەی فایل
 module.exports = async (req, res) => {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method Not Allowed' });
@@ -18,7 +16,9 @@ module.exports = async (req, res) => {
         return res.status(500).json({ error: 'Server configuration error.' });
     }
 
-    const form = formidable({ maxFiles: 5, maxFileSize: 5 * 1024 * 1024 });
+    // --- گۆڕانکارییەکە لێرەدایە ---
+    const form = new formidable.Formidable({ maxFiles: 5, maxFileSize: 5 * 1024 * 1024 });
+    // ---------------------------
 
     try {
         const [fields, files] = await new Promise((resolve, reject) => {
@@ -60,18 +60,17 @@ module.exports = async (req, res) => {
                 formData.append('caption', message);
                 formData.append('parse_mode', 'Markdown');
                 formData.append('photo', fs.createReadStream(images[0].filepath));
+                await fetch(`${telegramApiUrl}/sendPhoto`, { method: 'POST', body: formData });
             } else {
-                formData.append('media', JSON.stringify(
-                    images.map((image, index) => {
-                        const attachmentName = `photo_${index}`;
-                        formData.append(attachmentName, fs.createReadStream(image.filepath));
-                        return { type: 'photo', media: `attach://${attachmentName}`, caption: index === 0 ? message : '', parse_mode: 'Markdown' };
-                    })
-                ));
+                const media = [];
+                images.forEach((image, index) => {
+                    const attachmentName = `photo_${index}`;
+                    media.push({ type: 'photo', media: `attach://${attachmentName}`, caption: index === 0 ? message : '', parse_mode: 'Markdown' });
+                    formData.append(attachmentName, fs.createReadStream(image.filepath));
+                });
+                formData.append('media', JSON.stringify(media));
+                await fetch(`${telegramApiUrl}/sendMediaGroup`, { method: 'POST', body: formData });
             }
-            const url = images.length === 1 ? `${telegramApiUrl}/sendPhoto` : `${telegramApiUrl}/sendMediaGroup`;
-            await fetch(url, { method: 'POST', body: formData });
-
         } else {
             await fetch(`${telegramApiUrl}/sendMessage`, {
                 method: 'POST',
