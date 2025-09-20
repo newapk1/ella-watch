@@ -1,5 +1,5 @@
 const fetch = require('node-fetch');
-const formidable = require('formidable'); // وەک خۆی دەمێنێتەوە
+const formidable = require('formidable');
 const fs = require('fs');
 const FormData = require('form-data');
 
@@ -16,9 +16,11 @@ module.exports = async (req, res) => {
         return res.status(500).json({ error: 'Server configuration error.' });
     }
 
-    // --- گۆڕانکارییەکە لێرەدایە ---
-    const form = new formidable.Formidable({ maxFiles: 5, maxFileSize: 5 * 1024 * 1024 });
-    // ---------------------------
+    const form = new formidable.Formidable({
+        maxFiles: 5,
+        maxFileSize: 5 * 1024 * 1024,
+        keepExtensions: true,
+    });
 
     try {
         const [fields, files] = await new Promise((resolve, reject) => {
@@ -57,21 +59,33 @@ module.exports = async (req, res) => {
             formData.append('chat_id', CHAT_ID);
 
             if (images.length === 1) {
+                // حاڵەتی یەک وێنە: بەکارهێنانی sendPhoto
+                const image = images[0];
+                formData.append('photo', fs.createReadStream(image.filepath), image.originalFilename);
                 formData.append('caption', message);
                 formData.append('parse_mode', 'Markdown');
-                formData.append('photo', fs.createReadStream(images[0].filepath));
+                
                 await fetch(`${telegramApiUrl}/sendPhoto`, { method: 'POST', body: formData });
+
             } else {
+                // حاڵەتی چەند وێنەیەک: بەکارهێنانی sendMediaGroup
                 const media = [];
                 images.forEach((image, index) => {
-                    const attachmentName = `photo_${index}`;
-                    media.push({ type: 'photo', media: `attach://${attachmentName}`, caption: index === 0 ? message : '', parse_mode: 'Markdown' });
-                    formData.append(attachmentName, fs.createReadStream(image.filepath));
+                    const attachmentName = `file${index}`; // هاوشێوەی کۆدی PHP
+                    media.push({
+                        type: 'photo',
+                        media: `attach://${attachmentName}`,
+                        caption: index === 0 ? message : '',
+                        parse_mode: 'Markdown'
+                    });
+                    formData.append(attachmentName, fs.createReadStream(image.filepath), image.originalFilename);
                 });
                 formData.append('media', JSON.stringify(media));
+
                 await fetch(`${telegramApiUrl}/sendMediaGroup`, { method: 'POST', body: formData });
             }
         } else {
+            // حاڵەتی بێ وێنە
             await fetch(`${telegramApiUrl}/sendMessage`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
