@@ -6,7 +6,6 @@ import FormData from 'form-data';
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const CHAT_ID = process.env.CHAT_ID;
 
-// گرنگ: ئەمە بە Vercel دەڵێت خۆی مامەڵە لەگەڵ body نەکات
 export const config = {
     api: {
         bodyParser: false,
@@ -73,7 +72,6 @@ export default async function handler(req, res) {
                     formData.append(attachmentName, fs.createReadStream(image.filepath));
                 });
                 
-                // پەیامەکە تەنها بۆ یەکەم وێنە زیاد دەکەین
                 media[0].caption = message;
                 media[0].parse_mode = 'Markdown';
 

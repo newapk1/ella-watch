@@ -1,31 +1,7 @@
-<!-- <!DOCTYPE html>
-<html lang="ku" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <title>سەرکەوتوو بوو</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        body { display: flex; justify-content: center; align-items: center; height: 100vh; text-align: center; }
-        .card { background: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-        h1 { color: #28a745; } p { font-size: 1.2rem; }
-        a { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #007BFF; color: #fff; text-decoration: none; border-radius: 8px; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h1>داواکارییەکەت بە سەرکەوتوویی نێردرا!</h1>
-        <p>لەماوەی ٢٤ بۆ ٤٨ کاتژمێر داواکارییەکە دەگات بە دەستت. سوپاس بۆ متمانەتان.</p>
-        <a href="/">گەڕانەوە بۆ پەڕەی سەرەکی</a>
-    </div>
-</body>
-</html> -->
-
 <!DOCTYPE html>
-<!-- زمانی بنەڕەتی و ئاڕاستە بە JavaScript دادەنرێت -->
 <html>
 <head>
     <meta charset="UTF-8">
-    <!-- ناونیشانی پەڕە بە JavaScript دادەنرێت -->
     <title></title>
     <link rel="stylesheet" href="style.css">
     <style>
@@ -37,7 +13,6 @@
 </head>
 <body>
     <div class="card">
-        <!-- ئەم بەشانە بە JavaScript پڕ دەکرێنەوە -->
         <h1 data-key="success_title"></h1>
         <p data-key="success_message"></p>
         <a href="/" data-key="back_button"></a>
@@ -45,33 +20,27 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // وەرگرتنی زمانی هەڵبژێردراو لە Local Storage
             const savedLang = localStorage.getItem('language') || 'ku';
 
-            // بارکردنی فایلی وەرگێڕانەکان
             fetch('translations.json')
                 .then(response => response.json())
                 .then(translations => {
                     const t = translations[savedLang];
                     if (!t) return;
 
-                    // دانانی ئاڕاستە و زمانی پەڕە
                     const isRTL = savedLang !== 'en';
                     document.documentElement.lang = savedLang;
                     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
                     document.body.dir = isRTL ? 'rtl' : 'ltr';
 
-                    // دانانی ناونیشانی پەڕە
                     document.title = t.success_title;
 
-                    // پڕکردنەوەی دەقەکان
                     document.querySelector('[data-key="success_title"]').textContent = t.success_title;
                     document.querySelector('[data-key="success_message"]').textContent = t.success_message;
                     document.querySelector('[data-key="back_button"]').textContent = t.back_button;
                 })
                 .catch(error => {
                     console.error("Failed to load translations for success page:", error);
-                    // لە حاڵەتی هەڵەدا، دەقی بنەڕەتی کوردی پیشان دەدەین
                     document.querySelector('[data-key="success_title"]').textContent = "سەرکەوتوو بوو!";
                     document.querySelector('[data-key="success_message"]').textContent = "داواکارییەکەت بە سەرکەوتوویی نێردرا!";
                     document.querySelector('[data-key="back_button"]').textContent = "گەڕانەوە بۆ پەڕەی سەرەکی";

@@ -15,7 +15,6 @@
     box-sizing: border-box;
 }
 
-/* زیادکردنی فۆنتی کوردی لۆکاڵ */
 @font-face {
     font-family: 'krd';
     src: url('NRT-Bd.ttf') format('truetype');
@@ -101,7 +100,7 @@ body {
 
 .form-group input[type="text"],
 .form-group input[type="number"],
-.form-group input[type="tel"], /* زیادکرا */
+.form-group input[type="tel"],
 .form-group textarea {
     width: 100%;
     padding: 12px;
@@ -114,7 +113,7 @@ body {
 
 .form-group input[type="text"]:focus,
 .form-group input[type="number"]:focus,
-.form-group input[type="tel"]:focus, /* زیادکرا */
+.form-group input[type="tel"]:focus,
 .form-group textarea:focus {
     outline: none;
     border-color: var(--primary-color);

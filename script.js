@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- بەشی گۆڕینی زمان ---
     const langSelector = document.getElementById('lang-selector');
     const formLanguageInput = document.getElementById('form-language');
     let translations = {};
@@ -41,7 +40,6 @@ document.addEventListener('DOMContentLoaded', () => {
     langSelector.addEventListener('change', (e) => setLanguage(e.target.value));
     loadTranslations();
 
-    // --- بەشی پێشبینی و سڕینەوەی وێنە ---
     const imageInput = document.getElementById('watch_images');
     const previewContainer = document.getElementById('image-preview-container');
     const form = document.getElementById('order-form');
@@ -49,11 +47,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     imageInput.addEventListener('change', () => {
         const maxFiles = 5;
-        // پاککردنەوەی پێشبینییە کۆنەکان پێش زیادکردنی نوێ
         previewContainer.innerHTML = ''; 
         const newFiles = new DataTransfer();
 
-        // زیادکردنی فایلە نوێیەکان
         Array.from(imageInput.files).forEach(file => {
             if (newFiles.items.length < maxFiles) {
                 newFiles.items.add(file);
@@ -66,8 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         selectedFiles = newFiles;
         imageInput.files = selectedFiles.files;
-        
-        // پیشاندانی پێشبینی بۆ فایلە پەسەندکراوەکان
+
         Array.from(selectedFiles.files).forEach(renderPreview);
     });
 
