@@ -17,7 +17,7 @@ module.exports = async (req, res) => {
     }
 
     const form = new formidable.Formidable({
-        multiples: true, // گرنگە بۆ وەرگرتنی چەند فایلێک
+        multiples: true,
         maxFiles: 5,
         maxFileSize: 5 * 1024 * 1024,
         keepExtensions: true,
@@ -31,15 +31,12 @@ module.exports = async (req, res) => {
             });
         });
 
-        // --- گرنگترین گۆڕانکاری لێرەدایە ---
-        // دڵنیادەبینەوە کە وێنەکان وەک لیستی فایل وەردەگرین
         let images = files.watch_images || [];
-        if (!Array.isArray(images)) {
-            images = images ? [images] : [];
+        if (images && !Array.isArray(images)) {
+            images = [images];
         }
-        // ---------------------------------
 
-        const getText = (field) => field?.[0] || '';
+        const getText = (field) => (Array.isArray(field) ? field[0] : field) || '';
         
         const customer_name = getText(fields.customer_name);
         const address = getText(fields.address);
@@ -76,10 +73,20 @@ module.exports = async (req, res) => {
                 const media = [];
                 images.forEach((image, index) => {
                     const attachmentName = `file${index}`;
-                    media.push({ type: 'photo', media: `attach://${attachmentName}`, caption: index === 0 ? message : '', parse_mode: 'Markdown' });
+                    media.push({ type: 'photo', media: `attach://${attachmentName}` });
                     formData.append(attachmentName, fs.createReadStream(image.filepath), { filename: image.originalFilename || `photo${index}.jpg` });
                 });
                 formData.append('media', JSON.stringify(media));
+                formData.append('caption', message); // ناردنی پەیام لەگەڵ یەکەم وێنە
+                formData.append('parse_mode', 'Markdown');
+                // گۆڕانکاری: پەیامەکە تەنها لەگەڵ یەکەم وێنە دەنێردرێت
+                const firstMedia = JSON.parse(formData.get('media'))[0];
+                firstMedia.caption = message;
+                firstMedia.parse_mode = 'Markdown';
+                const updatedMedia = JSON.parse(formData.get('media'));
+                updatedMedia[0] = firstMedia;
+                formData.set('media', JSON.stringify(updatedMedia));
+                
                 await fetch(`${telegramApiUrl}/sendMediaGroup`, { method: 'POST', body: formData });
             }
         } else {
