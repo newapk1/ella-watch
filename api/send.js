@@ -1,36 +1,32 @@
-const fetch = require('node-fetch');
-const formidable = require('formidable');
-const fs = require('fs');
-const FormData = require('form-data');
+import { formidable } from 'formidable';
+import fs from 'fs';
+import fetch from 'node-fetch';
+import FormData from 'form-data';
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const CHAT_ID = process.env.CHAT_ID;
 
-module.exports = async (req, res) => {
+// گرنگ: ئەمە بە Vercel دەڵێت خۆی مامەڵە لەگەڵ body نەکات
+export const config = {
+    api: {
+        bodyParser: false,
+    },
+};
+
+export default async function handler(req, res) {
     if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method Not Allowed' });
+        return res.status(405).json({ message: 'Method not allowed' });
     }
 
     if (!BOT_TOKEN || !CHAT_ID) {
-        console.error("Server Error: Missing BOT_TOKEN or CHAT_ID.");
-        return res.status(500).json({ error: 'Server configuration error.' });
+        return res.status(500).json({ message: 'Server configuration error' });
     }
 
-    const form = new formidable.Formidable({
-        multiples: true,
-        maxFiles: 5,
-        maxFileSize: 5 * 1024 * 1024,
-        keepExtensions: true,
-    });
+    const form = formidable({ multiples: true });
 
     try {
-        const [fields, files] = await new Promise((resolve, reject) => {
-            form.parse(req, (err, fields, files) => {
-                if (err) reject(err);
-                resolve([fields, files]);
-            });
-        });
-
+        const [fields, files] = await form.parse(req);
+        
         let images = files.watch_images || [];
         if (images && !Array.isArray(images)) {
             images = [images];
@@ -65,7 +61,7 @@ module.exports = async (req, res) => {
 
             if (images.length === 1) {
                 const image = images[0];
-                formData.append('photo', fs.createReadStream(image.filepath), { filename: image.originalFilename || 'photo.jpg' });
+                formData.append('photo', fs.createReadStream(image.filepath));
                 formData.append('caption', message);
                 formData.append('parse_mode', 'Markdown');
                 await fetch(`${telegramApiUrl}/sendPhoto`, { method: 'POST', body: formData });
@@ -74,19 +70,14 @@ module.exports = async (req, res) => {
                 images.forEach((image, index) => {
                     const attachmentName = `file${index}`;
                     media.push({ type: 'photo', media: `attach://${attachmentName}` });
-                    formData.append(attachmentName, fs.createReadStream(image.filepath), { filename: image.originalFilename || `photo${index}.jpg` });
+                    formData.append(attachmentName, fs.createReadStream(image.filepath));
                 });
-                formData.append('media', JSON.stringify(media));
-                formData.append('caption', message); // ناردنی پەیام لەگەڵ یەکەم وێنە
-                formData.append('parse_mode', 'Markdown');
-                // گۆڕانکاری: پەیامەکە تەنها لەگەڵ یەکەم وێنە دەنێردرێت
-                const firstMedia = JSON.parse(formData.get('media'))[0];
-                firstMedia.caption = message;
-                firstMedia.parse_mode = 'Markdown';
-                const updatedMedia = JSON.parse(formData.get('media'));
-                updatedMedia[0] = firstMedia;
-                formData.set('media', JSON.stringify(updatedMedia));
                 
+                // پەیامەکە تەنها بۆ یەکەم وێنە زیاد دەکەین
+                media[0].caption = message;
+                media[0].parse_mode = 'Markdown';
+
+                formData.append('media', JSON.stringify(media));
                 await fetch(`${telegramApiUrl}/sendMediaGroup`, { method: 'POST', body: formData });
             }
         } else {
@@ -101,7 +92,7 @@ module.exports = async (req, res) => {
         res.end();
 
     } catch (error) {
-        console.error('Error processing form:', error);
-        res.status(500).json({ error: 'Failed to process request', details: error.message, stack: error.stack });
+        console.error(error);
+        res.status(500).json({ message: 'Error uploading files', error: error.message });
     }
-};
+}
