@@ -59,33 +59,36 @@ module.exports = async (req, res) => {
             formData.append('chat_id', CHAT_ID);
 
             if (images.length === 1) {
-                // حاڵەتی یەک وێنە: بەکارهێنانی sendPhoto
                 const image = images[0];
-                formData.append('photo', fs.createReadStream(image.filepath), image.originalFilename);
+                // --- گۆڕانکاری لێرەدایە: خوێندنەوەی فایل بۆ بۆفەر ---
+                const fileBuffer = fs.readFileSync(image.filepath);
+                formData.append('photo', fileBuffer, { filename: image.originalFilename || 'photo.jpg' });
+                // ----------------------------------------------------
                 formData.append('caption', message);
                 formData.append('parse_mode', 'Markdown');
                 
                 await fetch(`${telegramApiUrl}/sendPhoto`, { method: 'POST', body: formData });
 
             } else {
-                // حاڵەتی چەند وێنەیەک: بەکارهێنانی sendMediaGroup
                 const media = [];
                 images.forEach((image, index) => {
-                    const attachmentName = `file${index}`; // هاوشێوەی کۆدی PHP
+                    const attachmentName = `file${index}`;
+                    // --- گۆڕانکاری لێرەدایە: خوێندنەوەی فایل بۆ بۆفەر ---
+                    const fileBuffer = fs.readFileSync(image.filepath);
+                    formData.append(attachmentName, fileBuffer, { filename: image.originalFilename || `photo${index}.jpg` });
+                    // ----------------------------------------------------
                     media.push({
                         type: 'photo',
                         media: `attach://${attachmentName}`,
                         caption: index === 0 ? message : '',
                         parse_mode: 'Markdown'
                     });
-                    formData.append(attachmentName, fs.createReadStream(image.filepath), image.originalFilename);
                 });
                 formData.append('media', JSON.stringify(media));
 
                 await fetch(`${telegramApiUrl}/sendMediaGroup`, { method: 'POST', body: formData });
             }
         } else {
-            // حاڵەتی بێ وێنە
             await fetch(`${telegramApiUrl}/sendMessage`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -98,6 +101,7 @@ module.exports = async (req, res) => {
 
     } catch (error) {
         console.error('Error processing form:', error);
-        res.status(500).json({ error: 'Failed to process request', details: error.message });
+        // بۆ دیباگکردن، هەڵەکە لە وەڵامدا بنێرەوە
+        res.status(500).json({ error: 'Failed to process request', details: error.message, stack: error.stack });
     }
 };
