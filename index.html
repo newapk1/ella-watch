@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-key="site_title">ئێلا واچ</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <div class="form-wrapper">
+            
+            <div class="language-switcher">
+                <select id="lang-selector">
+                    <option value="ku">کوردی</option>
+                    <option value="ar">العربية</option>
+                    <option value="en">English</option>
+                </select>
+            </div><br>
+
+            <div class="form-header">
+                <h1 data-key="form_title">داواکردنی کاتژمێر لە ئێلا واچ</h1>
+                <p data-key="form_subtitle">تکایە زانیارییەکان پڕبکەرەوە بۆ تۆمارکردنی داواکارییەکەت.</p>
+            </div>
+            <form id="order-form" action="/api/send" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="language" id="form-language" value="ku">
+
+                <div class="form-group">
+                    <label for="customer_name" data-key="label_name">ناوی بەڕێزت</label>
+                    <input type="text" id="customer_name" name="customer_name" data-key-placeholder="placeholder_name" placeholder="ناوەکەت بنووسە" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="address" data-key="label_address">ناونیشان</label>
+                    <input type="text" id="address" name="address" data-key-placeholder="placeholder_address" placeholder="شار، گەڕەک، کۆڵان..." required>
+                </div>
+
+                <!-- گۆڕانکاری لێرەدایە: زیادکردنی ژمارەی مۆبایل -->
+                <div class="form-group">
+                    <label for="phone1" data-key="label_phone1">ژمارەی مۆبایل</label>
+                    <input type="tel" id="phone1" name="phone1" data-key-placeholder="placeholder_phone" placeholder="07XX XXX XXXX" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone2" data-key="label_phone2">ژمارەی مۆبایلی دووەم (ئارەزوومەندانە)</label>
+                    <input type="tel" id="phone2" name="phone2" data-key-placeholder="placeholder_phone" placeholder="07XX XXX XXXX">
+                </div>
+                <!-- کۆتایی گۆڕانکاری -->
+
+                <div class="form-group">
+                    <label for="watch_code" data-key="label_watch_code">کۆدی کاتژمێر (ئارەزوومەندانە)</label>
+                    <input type="text" id="watch_code" name="watch_code" data-key-placeholder="placeholder_watch_code" placeholder="کۆدی ئەو کاتژمێرەی دەتەوێت">
+                </div>
+
+                <div class="form-group">
+                    <label for="quantity" data-key="label_quantity">بڕی داواکاری</label>
+                    <input type="number" id="quantity" name="quantity" value="1" min="1" max="100" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="watch_images" data-key="label_watch_image">وێنەی کاتژمێر (تا ٥ وێنە)</label>
+                    <input type="file" id="watch_images" name="watch_images[]" accept="image/png, image/jpeg, image/gif" multiple>
+                    <div id="image-preview-container"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="notes" data-key="label_notes">تێبینی (ئارەزوومەندانە)</label>
+                    <textarea id="notes" name="notes" rows="4" data-key-placeholder="placeholder_notes" placeholder="ئەگەر تێبینییەکت هەیە لێرە بینووسە..."></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn" data-key="submit_button">ناردنی داواکاری</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
