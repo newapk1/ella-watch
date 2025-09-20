@@ -17,6 +17,7 @@ module.exports = async (req, res) => {
     }
 
     const form = new formidable.Formidable({
+        multiples: true, // گرنگە بۆ وەرگرتنی چەند فایلێک
         maxFiles: 5,
         maxFileSize: 5 * 1024 * 1024,
         keepExtensions: true,
@@ -30,8 +31,16 @@ module.exports = async (req, res) => {
             });
         });
 
-        const getText = (field) => field?.[0] || '';
+        // --- گرنگترین گۆڕانکاری لێرەدایە ---
+        // دڵنیادەبینەوە کە وێنەکان وەک لیستی فایل وەردەگرین
+        let images = files.watch_images || [];
+        if (!Array.isArray(images)) {
+            images = images ? [images] : [];
+        }
+        // ---------------------------------
 
+        const getText = (field) => field?.[0] || '';
+        
         const customer_name = getText(fields.customer_name);
         const address = getText(fields.address);
         const phone1 = getText(fields.phone1);
@@ -51,7 +60,6 @@ module.exports = async (req, res) => {
         message += `📝 **تێبینی:** ${notes}\n`;
         message += `🌐 **زمانی فۆرم:** ${lang.toUpperCase()}`;
 
-        const images = files.watch_images || [];
         const telegramApiUrl = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
         if (images.length > 0 ) {
@@ -60,32 +68,18 @@ module.exports = async (req, res) => {
 
             if (images.length === 1) {
                 const image = images[0];
-                // --- گۆڕانکاری لێرەدایە: خوێندنەوەی فایل بۆ بۆفەر ---
-                const fileBuffer = fs.readFileSync(image.filepath);
-                formData.append('photo', fileBuffer, { filename: image.originalFilename || 'photo.jpg' });
-                // ----------------------------------------------------
+                formData.append('photo', fs.createReadStream(image.filepath), { filename: image.originalFilename || 'photo.jpg' });
                 formData.append('caption', message);
                 formData.append('parse_mode', 'Markdown');
-                
                 await fetch(`${telegramApiUrl}/sendPhoto`, { method: 'POST', body: formData });
-
             } else {
                 const media = [];
                 images.forEach((image, index) => {
                     const attachmentName = `file${index}`;
-                    // --- گۆڕانکاری لێرەدایە: خوێندنەوەی فایل بۆ بۆفەر ---
-                    const fileBuffer = fs.readFileSync(image.filepath);
-                    formData.append(attachmentName, fileBuffer, { filename: image.originalFilename || `photo${index}.jpg` });
-                    // ----------------------------------------------------
-                    media.push({
-                        type: 'photo',
-                        media: `attach://${attachmentName}`,
-                        caption: index === 0 ? message : '',
-                        parse_mode: 'Markdown'
-                    });
+                    media.push({ type: 'photo', media: `attach://${attachmentName}`, caption: index === 0 ? message : '', parse_mode: 'Markdown' });
+                    formData.append(attachmentName, fs.createReadStream(image.filepath), { filename: image.originalFilename || `photo${index}.jpg` });
                 });
                 formData.append('media', JSON.stringify(media));
-
                 await fetch(`${telegramApiUrl}/sendMediaGroup`, { method: 'POST', body: formData });
             }
         } else {
@@ -101,7 +95,6 @@ module.exports = async (req, res) => {
 
     } catch (error) {
         console.error('Error processing form:', error);
-        // بۆ دیباگکردن، هەڵەکە لە وەڵامدا بنێرەوە
         res.status(500).json({ error: 'Failed to process request', details: error.message, stack: error.stack });
     }
 };
